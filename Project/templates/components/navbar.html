@@ -1,0 +1,65 @@
+<nav class="navbar navbar-expand-lg sticky-top glass-navbar py-3">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="{{ url_for('weather.home') }}">
+      <div class="brand-icon-wrapper">
+        <i class="fa-solid fa-cloud-sun-rain brand-icon text-gradient"></i>
+      </div>
+      <span class="brand-text">Weather<span class="brand-accent">Sphere</span></span>
+    </a>
+
+    <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+      <i class="fa-solid fa-bars-staggered nav-toggle-icon"></i>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4 gap-lg-1">
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if request.endpoint == 'weather.home' }}" href="{{ url_for('weather.home') }}">
+            <i class="fa-solid fa-house me-1"></i> Home
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if request.endpoint == 'weather.dashboard' }}" href="{{ url_for('weather.dashboard') }}">
+            <i class="fa-solid fa-chart-line me-1"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if request.endpoint == 'favorites.view_favorites' }}" href="{{ url_for('favorites.view_favorites') }}">
+            <i class="fa-solid fa-star me-1"></i> Favorites
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if request.endpoint == 'history.view_history' }}" href="{{ url_for('history.view_history') }}">
+            <i class="fa-solid fa-clock-rotate-left me-1"></i> History
+          </a>
+        </li>
+      </ul>
+
+      <!-- Quick Search Input in Navbar -->
+      {# GET-based search — CSRF not required for GET, but the hidden token
+         is included here so the form is already wired if ever switched to POST. #}
+      <form class="d-flex me-3 navbar-search-form" action="{{ url_for('weather.dashboard') }}" method="GET">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="input-group search-input-group shadow-sm">
+          <span class="input-group-text bg-transparent border-end-0 text-muted ps-3">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </span>
+          <input type="text" name="city" class="form-control border-start-0 ps-0 bg-transparent text-body" placeholder="Search city..." aria-label="Search city" required>
+          <button class="btn btn-primary px-3 rounded-end-pill" type="submit">
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </form>
+
+      <!-- Actions: Theme Toggle & Location -->
+      <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+        <button type="button" class="btn btn-icon-glass" id="locationBtn" title="Detect My Location" aria-label="Detect My Location">
+          <i class="fa-solid fa-location-crosshairs"></i>
+        </button>
+        <button type="button" class="btn btn-icon-glass" id="themeToggleBtn" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">
+          <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>

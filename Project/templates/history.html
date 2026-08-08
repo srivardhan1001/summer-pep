@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Search History — WeatherSphere{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="fw-extrabold mb-1"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Search History</h1>
+      <p class="text-muted small mb-0">Track and manage your recent weather queries</p>
+    </div>
+    {% if history_items %}
+    {#
+      ClearHistoryForm — renders hidden CSRF token + styled submit button.
+      The "Clear All History" button ID is kept as 'clearHistoryBtn' so
+      the existing main.js handler continues to work without any changes.
+      The form posts to the JSON API via JavaScript (fetch DELETE), not via
+      a traditional form submission, so the action/method here are fallbacks.
+    #}
+    <form id="clearHistoryForm" action="{{ url_for('history.clear_all_history') }}" method="POST" class="d-inline">
+      {{ form.hidden_tag() }}
+      {{ form.submit(class="btn btn-outline-danger rounded-pill btn-sm px-3", id="clearHistoryBtn") }}
+    </form>
+    {% endif %}
+  </div>
+
+  {% if history_items %}
+  <div class="card glass-card border-0 shadow-sm overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light-subtle">
+          <tr>
+            <th class="ps-4">City</th>
+            <th>Temperature</th>
+            <th>Condition</th>
+            <th>Date & Time</th>
+            <th class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          {% for item in history_items %}
+          <tr id="history-row-{{ item.id }}">
+            <td class="ps-4 fw-bold">
+              <a href="{{ url_for('weather.dashboard', city=item.city) }}" class="text-decoration-none text-body hover-primary">
+                {{ item.city }} {% if item.country %}<span class="badge bg-secondary-subtle text-secondary ms-1">{{ item.country }}</span>{% endif %}
+              </a>
+            </td>
+            <td class="fw-semibold text-primary fs-5">{{ item.temperature }}°C</td>
+            <td>
+              <img src="https://openweathermap.org/img/wn/{{ item.icon }}.png" alt="{{ item.weather }}" width="35" height="35" class="me-1">
+              {{ item.weather }}
+            </td>
+            <td class="text-muted small">{{ item.created_at.strftime('%b %d, %Y - %H:%M') }}</td>
+            <td class="text-end pe-4">
+              <a href="{{ url_for('weather.dashboard', city=item.city) }}" class="btn btn-sm btn-outline-primary rounded-pill me-1" title="View Weather">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              </a>
+              <button type="button" class="btn btn-sm btn-outline-danger rounded-pill btn-delete-history" data-id="{{ item.id }}" title="Delete Entry">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="card glass-card text-center p-5 border-0 shadow-sm">
+    <i class="fa-solid fa-clock-rotate-left display-3 text-muted mb-3 opacity-50"></i>
+    <h3 class="fw-bold text-muted">No Search History Found</h3>
+    <p class="text-muted small mb-4">Start searching cities on the home page or dashboard to build your log.</p>
+    <div>
+      <a href="{{ url_for('weather.home') }}" class="btn btn-primary rounded-pill px-4 fw-semibold">Search Cities Now</a>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

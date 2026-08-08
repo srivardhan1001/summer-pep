@@ -1,0 +1,21 @@
+{% macro render_forecast_card(day_data) %}
+<div class="col-6 col-md-4 col-lg-2 mb-3">
+  <div class="card glass-card forecast-card h-100 text-center p-3 border-0 shadow-sm transition-hover">
+    <div class="fw-bold text-body mb-1">{{ day_data.day }}</div>
+    <div class="text-muted small mb-2">{{ day_data.date }}</div>
+    <div class="forecast-icon-wrapper my-2">
+      <img src="https://openweathermap.org/img/wn/{{ day_data.icon }}@2x.png" alt="{{ day_data.description }}" width="50" height="50">
+    </div>
+    <div class="fs-4 fw-bold text-body mb-1">{{ day_data.temp }}°C</div>
+    <div class="small text-muted mb-2">{{ day_data.description }}</div>
+    <div class="d-flex justify-content-center gap-2 small text-muted border-top pt-2">
+      <span><i class="fa-solid fa-arrow-down text-info"></i> {{ day_data.min_temp }}°</span>
+      <span><i class="fa-solid fa-arrow-up text-danger"></i> {{ day_data.max_temp }}°</span>
+    </div>
+    <div class="mt-2 text-muted extra-small">
+      <div><i class="fa-solid fa-droplet me-1"></i>{{ day_data.humidity }}%</div>
+      <div><i class="fa-solid fa-wind me-1"></i>{{ day_data.wind_speed }} km/h</div>
+    </div>
+  </div>
+</div>
+{% endmacro %}

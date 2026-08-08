@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+{% from 'components/forecast_cards.html' import render_forecast_card %}
+
+{% block title %}{{ weather.city }} Weather Dashboard — WeatherSphere{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Dashboard Header Bar -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3 reveal-on-scroll">
+    <div>
+      <div class="d-flex align-items-center gap-3">
+        <h1 class="display-4 fw-extrabold mb-0 text-body tracking-tight" id="dashboardCityTitle">{{ weather.city }}</h1>
+        <span class="fs-6 badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 shadow-sm animate-pulse-slow">
+          <i class="fa-solid fa-earth-americas me-1"></i> {{ weather.country }}
+        </span>
+        
+        <!-- Star Favorite Button -->
+        <button type="button" class="btn btn-icon-glass text-warning border-warning-subtle ripple-effect" id="favToggleBtn" data-city="{{ weather.city }}" data-country="{{ weather.country }}" title="Toggle Favorite">
+          <i class="fa-solid fa-star {{ 'text-warning' if is_favorite else 'text-muted opacity-50' }}" id="favStarIcon"></i>
+        </button>
+      </div>
+
+      <p class="text-muted mb-0 mt-2 d-flex flex-wrap align-items-center gap-3 small">
+        <span><i class="fa-regular fa-clock me-1 text-primary"></i> Local Time: <strong class="text-body" id="liveClock">{{ weather.local_time }}</strong></span>
+        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-1"><i class="fa-solid fa-location-crosshairs me-1"></i> {{ weather.coords.lat }}, {{ weather.coords.lon }}</span>
+      </p>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('weather.dashboard', city=weather.city) }}" class="btn btn-glass-secondary rounded-pill fw-semibold px-4 ripple-effect" id="refreshBtn">
+        <i class="fa-solid fa-arrows-rotate me-2"></i> Refresh
+      </a>
+      <button type="button" class="btn btn-primary rounded-pill fw-bold px-4 shadow-lg text-white border-0 gradient-btn-glow" data-bs-toggle="modal" data-bs-target="#compareModal">
+        <i class="fa-solid fa-code-compare me-2"></i> Compare Cities
+      </button>
+    </div>
+  </div>
+
+  {% if weather.is_demo_data %}
+  <div class="alert alert-info glass-alert rounded-4 border-0 shadow-lg mb-4 reveal-on-scroll">
+    <i class="fa-solid fa-circle-info me-2"></i> 
+    <strong>Demo Data Mode Active:</strong> Add your <code>VISUALCROSSING_API_KEY</code> in the <code>.env</code> file to pull live satellite API data streams.
+  </div>
+  {% endif %}
+
+  <!-- Large Premium Hero Weather Card -->
+  <div class="card glass-card gradient-border-card border-0 shadow-2xl mb-5 weather-hero-gradient-card reveal-on-scroll">
+    <div class="card-body p-4 p-md-5 position-relative z-2">
+      <div class="row align-items-center g-4">
+        
+        <div class="col-lg-6">
+          <div class="d-flex align-items-center gap-4">
+            <div class="weather-icon-hero-wrapper position-relative">
+              <img src="https://openweathermap.org/img/wn/{{ weather.icon }}@4x.png" alt="{{ weather.description }}" class="weather-icon-hero-lg" width="130" height="130">
+            </div>
+            <div>
+              <div class="display-1 fw-extrabold lh-1 text-body">
+                <span class="count-up" data-count="{{ weather.temp }}" data-float="true">{{ weather.temp }}</span>°<span class="fs-2 text-muted font-normal">C</span>
+              </div>
+              <h3 class="fw-bold text-primary text-capitalize mt-2 mb-1">{{ weather.description }}</h3>
+              <div class="text-muted small fs-6">
+                Feels like <span class="fw-bold text-body count-up" data-count="{{ weather.feels_like }}" data-float="true">{{ weather.feels_like }}</span>°C
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- High Level Metrics Overview Pills -->
+        <div class="col-lg-6">
+          <div class="row g-3">
+            <div class="col-4">
+              <div class="glass-mini-box p-3 text-center rounded-4">
+                <i class="fa-solid fa-temperature-arrow-down text-info fs-4 mb-1"></i>
+                <div class="text-muted extra-small">Min Temp</div>
+                <div class="fw-bold fs-5"><span class="count-up" data-count="{{ weather.temp_min }}" data-float="true">{{ weather.temp_min }}</span>°C</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="glass-mini-box p-3 text-center rounded-4">
+                <i class="fa-solid fa-temperature-arrow-up text-danger fs-4 mb-1"></i>
+                <div class="text-muted extra-small">Max Temp</div>
+                <div class="fw-bold fs-5"><span class="count-up" data-count="{{ weather.temp_max }}" data-float="true">{{ weather.temp_max }}</span>°C</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="glass-mini-box p-3 text-center rounded-4">
+                <i class="fa-solid fa-cloud text-secondary fs-4 mb-1"></i>
+                <div class="text-muted extra-small">Cloudiness</div>
+                <div class="fw-bold fs-5"><span class="count-up" data-count="{{ weather.cloudiness }}">{{ weather.cloudiness }}</span>%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Weather Metrics Cards Grid -->
+  <div class="row g-3 mb-5 reveal-on-scroll">
+    <!-- Humidity -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="card glass-card h-100 p-3 text-center border-0 shadow-sm transition-hover">
+        <div class="metric-icon-box bg-info-glow mx-auto">
+          <i class="fa-solid fa-droplet fs-4"></i>
+        </div>
+        <div class="text-muted small fw-semibold">Humidity</div>
+        <div class="fs-4 fw-bold text-body mt-1"><span class="count-up" data-count="{{ weather.humidity }}">{{ weather.humidity }}</span>%</div>
+        <div class="progress mt-2 rounded-pill bg-secondary-subtle" style="height: 6px;">
+          <div class="progress-bar bg-info rounded-pill" style="width: {{ weather.humidity }}%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pressure -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="card glass-card h-100 p-3 text-center border-0 shadow-sm transition-hover">
+        <div class="metric-icon-box bg-warning-glow mx-auto">
+          <i class="fa-solid fa-gauge-high fs-4"></i>
+        </div>
+        <div class="text-muted small fw-semibold">Pressure</div>
+        <div class="fs-4 fw-bold text-body mt-1"><span class="count-up" data-count="{{ weather.pressure }}">{{ weather.pressure }}</span> <span class="fs-6 text-muted">hPa</span></div>
+        <div class="text-muted extra-small mt-1">Atmospheric</div>
+      </div>
+    </div>
+
+    <!-- Wind Speed & Compass -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="card glass-card h-100 p-3 text-center border-0 shadow-sm transition-hover">
+        <div class="compass-dial mb-2">
+          <i class="fa-solid fa-location-arrow compass-arrow" style="transform: rotate({{ weather.wind_direction }}deg);"></i>
+        </div>
+        <div class="text-muted small fw-semibold">Wind Speed</div>
+        <div class="fs-5 fw-bold text-body mt-1"><span class="count-up" data-count="{{ weather.wind_speed }}" data-float="true">{{ weather.wind_speed }}</span> <span class="extra-small text-muted">km/h</span></div>
+        <div class="text-muted extra-small">Deg: {{ weather.wind_direction }}°</div>
+      </div>
+    </div>
+
+    <!-- Visibility -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="card glass-card h-100 p-3 text-center border-0 shadow-sm transition-hover">
+        <div class="metric-icon-box bg-success-glow mx-auto">
+          <i class="fa-solid fa-eye fs-4"></i>
+        </div>
+        <div class="text-muted small fw-semibold">Visibility</div>
+        <div class="fs-4 fw-bold text-body mt-1"><span class="count-up" data-count="{{ weather.visibility }}" data-float="true">{{ weather.visibility }}</span> <span class="fs-6 text-muted">km</span></div>
+        <div class="text-muted extra-small mt-1">Clear Horizon</div>
+      </div>
+    </div>
+
+    <!-- Air Quality (AQI) -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="card glass-card h-100 p-3 text-center border-0 shadow-sm transition-hover">
+        <div class="metric-icon-box bg-secondary-glow mx-auto">
+          <i class="fa-solid fa-smog fs-4"></i>
+        </div>
+        <div class="text-muted small fw-semibold">Air Quality (AQI)</div>
+        <div class="fs-5 fw-bold text-body mt-1">{{ weather.aqi.index }} - {{ weather.aqi.label }}</div>
+        <div class="badge bg-secondary-subtle text-secondary rounded-pill extra-small mt-1">PM2.5 Pollution</div>
+      </div>
+    </div>
+
+    <!-- UV Index -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="card glass-card h-100 p-3 text-center border-0 shadow-sm transition-hover">
+        <div class="metric-icon-box bg-danger-glow mx-auto">
+          <i class="fa-solid fa-sun fs-4"></i>
+        </div>
+        <div class="text-muted small fw-semibold">UV Index</div>
+        <div class="fs-4 fw-bold text-body mt-1"><span class="count-up" data-count="{{ weather.uv_index }}" data-float="true">{{ weather.uv_index }}</span></div>
+        <div class="badge {{ 'bg-warning-subtle text-warning' if weather.uv_index < 6 else 'bg-danger-subtle text-danger' }} rounded-pill extra-small mt-1">
+          {{ 'Moderate Risk' if weather.uv_index < 6 else 'High Solar Risk' }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sunrise & Sunset Timeline Arc Card -->
+  <div class="card glass-card border-0 shadow-lg mb-5 p-4 reveal-on-scroll">
+    <div class="row align-items-center g-4 text-center text-md-start">
+      <div class="col-md-4 d-flex align-items-center justify-content-center justify-content-md-start gap-3">
+        <div class="metric-icon-box bg-warning-glow">
+          <i class="fa-solid fa-sun-plant-wilt fs-3"></i>
+        </div>
+        <div>
+          <div class="text-muted small">Sunrise Time</div>
+          <div class="fs-3 fw-extrabold text-body">{{ weather.sunrise }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4 text-center">
+        <div class="text-muted small fw-semibold mb-2">Solar Day Cycle</div>
+        <div class="sunset-arc-box rounded-pill mb-2">
+          <div class="sunset-sun-orb" style="left: 48%; top: 12px;"></div>
+        </div>
+        <div class="extra-small text-muted">Sun Position (Live Solar Tracking)</div>
+      </div>
+
+      <div class="col-md-4 d-flex align-items-center justify-content-center justify-content-md-end gap-3 text-md-end">
+        <div>
+          <div class="text-muted small">Sunset Time</div>
+          <div class="fs-3 fw-extrabold text-body">{{ weather.sunset }}</div>
+        </div>
+        <div class="metric-icon-box bg-primary-glow">
+          <i class="fa-solid fa-moon fs-3"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hourly Forecast Strip -->
+  {% if weather.hourly_forecast %}
+  <div class="mb-5 reveal-on-scroll">
+    <h3 class="fw-extrabold mb-3 text-body"><i class="fa-solid fa-clock text-primary me-2"></i> 24-Hour Forecast Timeline</h3>
+    <div class="hourly-scroll-container d-flex gap-3 pb-3 overflow-x-auto">
+      {% for item in weather.hourly_forecast %}
+        <div class="card glass-card hourly-card text-center p-3 flex-shrink-0 border-0 shadow-sm">
+          <div class="small fw-semibold text-muted mb-1">{{ item.time }}</div>
+          <img src="https://openweathermap.org/img/wn/{{ item.icon }}.png" alt="{{ item.condition }}" width="50" height="50" class="mx-auto my-1">
+          <div class="fw-bold fs-4 text-body">{{ item.temp }}°C</div>
+          <div class="extra-small text-muted mt-1"><i class="fa-solid fa-droplet me-1 text-info"></i>{{ item.humidity }}%</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 5-Day Forecast Grid -->
+  {% if weather.daily_forecast %}
+  <div class="mb-5 reveal-on-scroll">
+    <h3 class="fw-extrabold mb-3 text-body"><i class="fa-solid fa-calendar-days text-primary me-2"></i> 5-Day Meteorological Forecast</h3>
+    <div class="row g-3">
+      {% for day in weather.daily_forecast %}
+        {{ render_forecast_card(day) }}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Weather Trends Interactive Charts -->
+  <div class="card glass-card border-0 shadow-xl mb-5 p-4 reveal-on-scroll">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+      <div>
+        <h3 class="fw-extrabold mb-0 text-body"><i class="fa-solid fa-chart-line text-primary me-2"></i> Weather Trends & Analytics</h3>
+        <p class="text-muted small mb-0">Multi-variable projection curves powered by Chart.js</p>
+      </div>
+
+      <!-- Chart Type Nav Tabs -->
+      <ul class="nav nav-pills glass-pill-tabs gap-1" id="chartTabs" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link active rounded-pill px-4 py-2 fw-semibold" id="temp-tab" data-bs-toggle="tab" data-bs-target="#temp-chart-pane" type="button">Temperature</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link rounded-pill px-4 py-2 fw-semibold" id="humidity-tab" data-bs-toggle="tab" data-bs-target="#humidity-chart-pane" type="button">Humidity</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link rounded-pill px-4 py-2 fw-semibold" id="wind-tab" data-bs-toggle="tab" data-bs-target="#wind-chart-pane" type="button">Wind</button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Chart Containers -->
+    <div class="tab-content" id="chartTabsContent">
+      <div class="tab-pane fade show active" id="temp-chart-pane" role="tabpanel">
+        <div class="chart-wrapper" style="position: relative; height:340px;">
+          <canvas id="tempChart"></canvas>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="humidity-chart-pane" role="tabpanel">
+        <div class="chart-wrapper" style="position: relative; height:340px;">
+          <canvas id="humidityChart"></canvas>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="wind-chart-pane" role="tabpanel">
+        <div class="chart-wrapper" style="position: relative; height:340px;">
+          <canvas id="windChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Smart Lifestyle Recommendations Panel -->
+  {% if weather.recommendations %}
+  <div class="mb-5 reveal-on-scroll">
+    <h3 class="fw-extrabold mb-3 text-body"><i class="fa-solid fa-lightbulb text-warning me-2"></i> AI Lifestyle Recommendations</h3>
+    <div class="row g-3">
+      {% for rec in weather.recommendations %}
+        <div class="col-md-4">
+          <div class="card glass-card p-4 h-100 border-0 shadow-sm d-flex flex-row align-items-center gap-3">
+            <div class="rec-icon-box bg-primary-glow fs-3 flex-shrink-0">
+              <i class="{{ rec.icon }}"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold mb-1 fs-6 text-body">{{ rec.title }}</h5>
+              <p class="text-muted small mb-0">{{ rec.text }}</p>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- City Comparison Modal -->
+<div class="modal fade" id="compareModal" tabindex="-1" aria-labelledby="compareModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content compare-modal-content border-0 shadow-2xl rounded-5 overflow-hidden">
+
+      <div class="modal-header compare-modal-header border-0 pb-0 px-4 pt-4">
+        <div>
+          <h4 class="modal-title fw-extrabold text-body mb-0" id="compareModalLabel">
+            <i class="fa-solid fa-code-compare text-primary me-2"></i> City Weather Comparison
+          </h4>
+          <p class="text-muted small mb-0 mt-1">Compare up to 3 cities side-by-side</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4">
+
+        <!-- Input Form -->
+        <form id="compareForm" novalidate class="mb-4">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-sm-4">
+              <label class="form-label text-muted small fw-semibold mb-1">City 1</label>
+              <input type="text" id="compareCity1" class="form-control glass-input px-4"
+                     value="{{ weather.city }}" placeholder="e.g. London" autocomplete="off">
+            </div>
+            <div class="col-12 col-sm-4">
+              <label class="form-label text-muted small fw-semibold mb-1">City 2</label>
+              <input type="text" id="compareCity2" class="form-control glass-input px-4"
+                     placeholder="e.g. Tokyo" autocomplete="off">
+            </div>
+            <div class="col-12 col-sm-4">
+              <label class="form-label text-muted small fw-semibold mb-1">City 3 <span class="text-muted fw-normal">(optional)</span></label>
+              <input type="text" id="compareCity3" class="form-control glass-input px-4"
+                     placeholder="e.g. New York" autocomplete="off">
+            </div>
+          </div>
+
+          <!-- Validation message -->
+          <div id="compareValidationMsg" class="text-danger small mt-2 d-none">
+            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+            <span id="compareValidationText"></span>
+          </div>
+
+          <div class="text-end mt-3">
+            <button type="submit" class="btn btn-primary px-5 fw-bold rounded-pill shadow-sm">
+              <i class="fa-solid fa-bolt me-2"></i>Compare
+            </button>
+          </div>
+        </form>
+
+        <!-- Results area -->
+        <div id="compareResults" class="row g-3">
+          <!-- JS injects cards here -->
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.CURRENT_WEATHER_CONDITION = "{{ weather.condition }}";
+  window.WEATHER_DAILY_DATA = {{ weather.daily_forecast | tojson | safe }};
+  window.WEATHER_HOURLY_DATA = {{ weather.hourly_forecast | tojson | safe }};
+</script>
+{% endblock %}

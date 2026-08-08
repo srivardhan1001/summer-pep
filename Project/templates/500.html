@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}500 Server Error — WeatherSphere{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="py-5">
+    <div class="display-1 fw-extrabold text-danger mb-2">500</div>
+    <div class="error-illustration mb-4">
+      <i class="fa-solid fa-triangle-exclamation display-2 text-danger animate-pulse"></i>
+    </div>
+    <h2 class="fw-bold mb-3">Atmospheric Interference (Server Error)</h2>
+    <p class="text-muted lead mb-4 max-w-lg mx-auto">Something went wrong while communicating with meteorological satellites. Our engineers are on it.</p>
+    <a href="{{ url_for('weather.home') }}" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm">
+      <i class="fa-solid fa-arrow-left me-2"></i> Back to Home
+    </a>
+  </div>
+</div>
+{% endblock %}

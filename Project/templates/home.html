@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% from 'components/weather_cards.html' import render_weather_card %}
+
+{% block title %}WeatherSphere — Modern SaaS Weather Platform{% endblock %}
+
+{% block content %}
+<div class="hero-section py-5 position-relative">
+  <div class="container py-lg-4">
+    <div class="row align-items-center g-5">
+
+      <!-- Left Column: Hero Copy & Search Bar -->
+      <div class="col-lg-7 animate-fade-in-up">
+        <div class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-semibold mb-3">
+          <i class="fa-solid fa-bolt me-1"></i> Next-Gen Meteorological Intelligence
+        </div>
+        <h1 class="hero-title display-3 fw-extrabold mb-3">
+          Real-Time Weather <br>
+          <span class="text-gradient">Engineered for Precision.</span>
+        </h1>
+        <p class="hero-subtitle text-muted lead mb-4">
+          Experience hyper-accurate forecasts, atmospheric pollution indices, UV risk analytics, and intelligent lifestyle recommendations with WeatherSphere.
+        </p>
+
+        <!-- Main Search Form (WTForms — CitySearchForm) -->
+        <div class="search-box-wrapper mb-4">
+          <form action="{{ url_for('weather.home') }}" method="POST" class="hero-search-form shadow-lg rounded-pill p-2 glass-search-bar" novalidate>
+            {{ form.hidden_tag() }}
+            <div class="input-group align-items-center">
+              <span class="input-group-text bg-transparent border-0 fs-5 text-muted ps-3">
+                <i class="fa-solid fa-location-dot text-primary"></i>
+              </span>
+
+              {{ form.city(
+                  class="form-control border-0 bg-transparent fs-5 text-body hero-input" +
+                        (" is-invalid" if form.city.errors else ""),
+                  placeholder="Enter city name (e.g. London, Tokyo, Paris)...",
+                  autocomplete="off",
+                  id="heroSearchInput"
+              ) }}
+
+              {% if form.city.errors %}
+                <div class="invalid-feedback d-block ps-2 small fw-semibold text-danger">
+                  {% for error in form.city.errors %}{{ error }}{% endfor %}
+                </div>
+              {% endif %}
+
+              <button type="button" class="btn btn-glass-secondary rounded-pill me-2 d-none d-sm-inline-flex align-items-center gap-1" id="heroLocateBtn">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span class="small fw-semibold">Locate</span>
+              </button>
+
+              {{ form.submit(class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm fw-bold") }}
+            </div>
+          </form>
+        </div>
+
+        <!-- Popular Cities Quick Badges -->
+        <div class="popular-cities d-flex flex-wrap align-items-center gap-2 mb-4">
+          <span class="text-muted small fw-semibold me-1"><i class="fa-solid fa-fire text-warning"></i> Popular:</span>
+          {% for city in popular_cities %}
+            <a href="{{ url_for('weather.dashboard', city=city) }}" class="badge city-quick-badge text-decoration-none py-2 px-3">
+              {{ city }}
+            </a>
+          {% endfor %}
+        </div>
+
+        <!-- Quick CTAs -->
+        <div class="d-flex flex-wrap gap-3">
+          <a href="{{ url_for('weather.dashboard', city='London') }}" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-semibold">
+            <i class="fa-solid fa-chart-pie me-2"></i> Open Dashboard
+          </a>
+          <a href="{{ url_for('favorites.view_favorites') }}" class="btn btn-glass-secondary rounded-pill px-4 py-2 fw-semibold">
+            <i class="fa-solid fa-star me-2"></i> View Saved Favorites
+          </a>
+        </div>
+      </div>
+
+      <!-- Right Column: Interactive Animated Weather Card -->
+      <div class="col-lg-5 text-center animate-pulse-slow">
+        <div class="hero-illustration-card glass-card p-4 p-md-5 rounded-5 shadow-2xl position-relative">
+          <div class="floating-sun"></div>
+          <div class="floating-cloud"></div>
+          
+          <div class="weather-icon-hero mb-3 position-relative z-2">
+            <i class="fa-solid fa-cloud-sun-rain display-1 text-primary hero-main-icon"></i>
+          </div>
+
+          <div class="position-relative z-2">
+            <h2 class="display-4 fw-extrabold mb-0" id="previewTemp">24.5°C</h2>
+            <p class="text-muted fw-medium fs-5 mb-3" id="previewCity">London, UK</p>
+            <div class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 mb-4">
+              <i class="fa-solid fa-leaf me-1"></i> AQI: 2 (Fair)
+            </div>
+
+            <div class="row g-2 text-start pt-3 border-top border-secondary-subtle small">
+              <div class="col-6">
+                <div class="text-muted">Wind Speed</div>
+                <div class="fw-bold" id="previewWind">12.5 km/h</div>
+              </div>
+              <div class="col-6">
+                <div class="text-muted">Humidity</div>
+                <div class="fw-bold" id="previewHumidity">62%</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Features & Recent Searches Section -->
+<div class="container py-5">
+  
+  {% if recent_searches %}
+  <div class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold mb-0"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Recent Searches</h3>
+      <a href="{{ url_for('history.view_history') }}" class="text-decoration-none small fw-semibold">View All History <i class="fa-solid fa-arrow-right ms-1"></i></a>
+    </div>
+    <div class="row g-3">
+      {% for item in recent_searches %}
+        <div class="col-6 col-md-4 col-lg-2">
+          <a href="{{ url_for('weather.dashboard', city=item.city) }}" class="card glass-card text-center p-3 text-decoration-none h-100 transition-hover border-0">
+            <div class="fw-bold text-body truncate">{{ item.city }}</div>
+            <div class="display-6 fw-bold my-1 text-primary">{{ item.temperature }}°</div>
+            <div class="small text-muted truncate">{{ item.weather }}</div>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Platform Highlights -->
+  <div class="row g-4 mt-2">
+    <div class="col-md-4">
+      <div class="card glass-card p-4 h-100 border-0 shadow-sm text-center">
+        <div class="feature-icon-box mx-auto mb-3 bg-primary-subtle text-primary rounded-circle">
+          <i class="fa-solid fa-chart-line fs-3"></i>
+        </div>
+        <h4 class="fw-bold">Interactive Analytics</h4>
+        <p class="text-muted">Explore multi-parameter temperature, humidity, pressure, and wind trend charts powered by Chart.js.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card glass-card p-4 h-100 border-0 shadow-sm text-center">
+        <div class="feature-icon-box mx-auto mb-3 bg-warning-subtle text-warning rounded-circle">
+          <i class="fa-solid fa-shield-heart fs-3"></i>
+        </div>
+        <h4 class="fw-bold">Smart Recommendations</h4>
+        <p class="text-muted">Receive live AI recommendations on attire, umbrella needs, and outdoor activities based on real weather metrics.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card glass-card p-4 h-100 border-0 shadow-sm text-center">
+        <div class="feature-icon-box mx-auto mb-3 bg-info-subtle text-info rounded-circle">
+          <i class="fa-solid fa-smog fs-3"></i>
+        </div>
+        <h4 class="fw-bold">Air Quality & UV Index</h4>
+        <p class="text-muted">Stay informed with real-time atmospheric pollution indicators (PM2.5, PM10, NO2) and UV radiation levels.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

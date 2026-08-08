@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="WeatherSphere - Production-Ready SaaS Weather Platform featuring live forecasts, AQI, UV Index, interactive trends, and location analytics.">
+  <meta name="keywords" content="Weather, Visual Crossing, Flask Weather Dashboard, Live Forecast, Air Quality Index">
+  <meta name="author" content="WeatherSphere Team">
+  <title>{% block title %}WeatherSphere — Premium Meteorological Platform{% endblock %}</title>
+
+  <!--
+    THEME FOUC PREVENTION — must run before ANY stylesheet is parsed.
+    Reads the saved preference from localStorage and sets data-bs-theme
+    on <html> immediately so the browser paints with the correct theme
+    on the very first frame. Without this, a dark→light flash occurs on
+    every page load when the user has selected light mode.
+  -->
+  <script>
+    (function () {
+      var saved = localStorage.getItem('weathersphere_theme') || 'dark';
+      document.documentElement.setAttribute('data-bs-theme', saved);
+    })();
+  </script>
+
+  <!-- Google Fonts: Poppins, Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome 6 CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- CSRF token meta tag — read by main.js for all fetch() mutation calls -->
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
+  {% block head %}{% endblock %}
+</head>
+<body class="weather-bg-default d-flex flex-column min-vh-100 position-relative" id="appBody">
+
+  <!-- Live Dynamic Weather Particles Canvas Overlay -->
+  <canvas id="weatherParticlesCanvas" class="weather-canvas-overlay"></canvas>
+
+  <!-- Ambient Glowing Background Orbs -->
+  <div class="ambient-glow-blob blob-1"></div>
+  <div class="ambient-glow-blob blob-2"></div>
+
+  <!-- Interactive Page Loader Screen -->
+  <div id="pageLoaderScreen" class="page-loader-wrapper">
+    <div class="loader-content text-center p-4">
+      <div class="loader-logo-wrapper mb-3">
+        <i class="fa-solid fa-cloud-sun-rain display-2 text-gradient loader-icon-spin"></i>
+      </div>
+      <h3 class="fw-extrabold mb-2 brand-text text-body">Weather<span class="text-primary">Sphere</span></h3>
+      <p class="text-muted small mb-4">Initializing Meteorological Analytics Engine...</p>
+      <div class="loader-progress-bar mx-auto">
+        <div class="loader-progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay Spinner for AJAX -->
+  <div id="globalSpinner" class="spinner-overlay d-none">
+    <div class="glass-spinner-card text-center p-4 rounded-5 shadow-2xl">
+      <div class="spinner-border text-primary mb-3" role="status" style="width: 3.5rem; height: 3.5rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <h5 class="fw-bold mb-1 text-body">Fetching Weather Data...</h5>
+      <p class="text-muted small mb-0">Connecting to satellite network</p>
+    </div>
+  </div>
+
+  <!-- Sticky Glass Navbar -->
+  {% include 'components/navbar.html' %}
+
+  <!-- Flash Messages Banner -->
+  <div class="container mt-3 z-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show glass-alert shadow-sm rounded-4 border-0" role="alert">
+            <i class="fa-solid {{ 'fa-triangle-exclamation' if category in ['warning','danger'] else 'fa-circle-check' }} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Content Block -->
+  <main class="flex-grow-1 position-relative z-2">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  {% include 'components/footer.html' %}
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Custom Scripts -->
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/autocomplete.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weather.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

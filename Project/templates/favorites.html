@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% from 'components/weather_cards.html' import render_weather_card %}
+
+{% block title %}Favorite Cities — WeatherSphere{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="fw-extrabold mb-1"><i class="fa-solid fa-star text-warning me-2"></i> Favorite Cities</h1>
+      <p class="text-muted small mb-0">Your pinned locations with live weather cards</p>
+    </div>
+    <a href="{{ url_for('weather.home') }}" class="btn btn-outline-primary rounded-pill btn-sm px-3 fw-semibold">
+      <i class="fa-solid fa-plus me-1"></i> Add More Cities
+    </a>
+  </div>
+
+  {#
+    Hidden CSRF form — the form.hidden_tag() renders a concealed <input> with
+    the CSRF token.  JavaScript reads this token and sends it as the
+    X-CSRFToken header on every fetch() mutation call (toggle, delete, etc.).
+    The form is not submitted directly; it exists purely to inject the token.
+  #}
+  <form id="csrfForm" class="d-none">
+    {{ form.hidden_tag() }}
+  </form>
+
+  {% if favorites %}
+  <div class="row g-4">
+    {% for card in favorites %}
+    <div class="col-md-6 col-lg-4 mb-4" id="fav-card-col-{{ card.fav_id }}">
+      <div class="card glass-card h-100 weather-card-hover border-0 shadow-sm">
+        <div class="card-body p-4 position-relative overflow-hidden">
+          <button type="button" class="btn btn-sm btn-icon-glass text-danger position-absolute top-0 end-0 m-3 btn-remove-fav" data-id="{{ card.fav_id }}" title="Remove Favorite">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+          
+          <div class="d-flex justify-content-between align-items-start mb-3 pe-4">
+            <div>
+              <h4 class="fw-bold mb-0">{{ card.city }}</h4>
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small">{{ card.country }}</span>
+            </div>
+            <img src="https://openweathermap.org/img/wn/{{ card.icon }}@2x.png" alt="{{ card.description }}" class="weather-icon-lg" width="60" height="60">
+          </div>
+          
+          <div class="d-flex align-items-baseline gap-2 mb-3">
+            <span class="display-5 fw-extrabold text-body">{{ card.temp }}°</span>
+            <span class="text-muted fs-6">{{ card.description }}</span>
+          </div>
+
+          <div class="row g-2 pt-3 border-top border-secondary-subtle small text-muted">
+            <div class="col-6"><i class="fa-solid fa-temperature-half me-1"></i> Feels: {{ card.feels_like }}°C</div>
+            <div class="col-6"><i class="fa-solid fa-droplet me-1"></i> Humidity: {{ card.humidity }}%</div>
+            <div class="col-6"><i class="fa-solid fa-wind me-1"></i> Wind: {{ card.wind_speed }} km/h</div>
+            <div class="col-6"><i class="fa-solid fa-gauge-high me-1"></i> Press: {{ card.pressure }} hPa</div>
+          </div>
+
+          <div class="mt-3 text-end">
+            <a href="{{ url_for('weather.dashboard', city=card.city) }}" class="btn btn-sm btn-primary rounded-pill px-3">
+              Open Dashboard <i class="fa-solid fa-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card glass-card text-center p-5 border-0 shadow-sm">
+    <i class="fa-solid fa-star display-3 text-warning mb-3 opacity-50"></i>
+    <h3 class="fw-bold text-muted">No Favorite Cities Saved</h3>
+    <p class="text-muted small mb-4">Click the star icon on any city dashboard to pin it here for quick access.</p>
+    <div>
+      <a href="{{ url_for('weather.home') }}" class="btn btn-primary rounded-pill px-4 fw-semibold">Explore Cities</a>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
